@@ -37334,6 +37334,12 @@ const DateParser = __webpack_require__(183)
 const REGEX = /\n\n<!-- iffftbot = (.*) -->/
 
 module.exports = {
+  get({issueBody}) {
+    const match = issueBody.match(REGEX)
+    if (match) {
+      return JSON.parse(match[1])
+    }
+  },
   async set({octokit, octokitParams, issueBody, iffft, label}) {
     console.log('setting metadata', iffft)
     try {
@@ -37341,7 +37347,7 @@ module.exports = {
     } catch (e) {
       console.log(`unable to set metadata`, iffft)
       octokit.issues.createComment(Object.assign({
-        body: `Iffftbot had the following trouble with your inputs: ${e} for If ${iffft.If} Where ${iffft.Where} In ${iffft.In} Then ${iffft.Then} With ${iffft.With}.`
+        body: `Iffftbot had the following trouble with your inputs: ${e.message} for If ${iffft.If} Where ${iffft.Where} In ${iffft.In} Then ${iffft.Then} With ${iffft.With}.`
       }, octokitParams))
       return
     }
@@ -37379,12 +37385,7 @@ module.exports = {
     if (!remainingIfffts) {
       octokit.issues.removeLabel(Object.assign({ name: label }, octokitParams))
     }
-  },
-  get({issueBody}) {
-    const match = issueBody.match(REGEX)
-    if (match) {
-      return JSON.parse(match[1])
-    }
+    return body
   }
 }
 
@@ -98753,24 +98754,24 @@ const LABEL = 'iffftbot'
 module.exports = {
   async on_slash_dispatch({payload}) {
     const octokit = new Octokit()
-    const issueQuery = `query MyQuery($issueId: ID!) {
-        node(id: $issueId) {
+    const resp = await octokit.graphql(`query MyQuery($issueId: ID!) {
+      node(id: $issueId) {
+        id
+        ... on Issue {
           id
-          ... on Issue {
-            id
-            number
-            body
-            repository {
-              name
-              owner {
-                id
-                login
-              }
+          number
+          body
+          repository {
+            name
+            owner {
+              id
+              login
             }
           }
         }
-      }`
-    let resp = await octokit.graphql(issueQuery, { issueId: payload.command.resource.id })
+      }
+    }`, { issueId: payload.command.resource.id })
+
     const octokitParams = {
       owner: resp.node.repository.owner.login,
       repo: resp.node.repository.name,
@@ -98793,10 +98794,13 @@ module.exports = {
     const event = payload.action ? `${name}.${payload.action}` : name
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
     const resp = await octokit.search.issuesAndPullRequests({ q: `label:"${LABEL}" org:${owner}` })
+
     console.log(`Found ${resp.data.items.length} relevant issues on ${event} event dispatched`)
 
     for (const issue of resp.data.items) {
       console.log('Looking for metadata in issue', issue)
+
+      let issueBody = issue.body
       const issueRepoParts = issue.repository_url.split('/')
       const octokitParams = {
         owner: issueRepoParts[issueRepoParts.length - 2],
@@ -98804,7 +98808,7 @@ module.exports = {
         issue_number: issue.number
       }
       
-      const metadata = Metadata.get({issueBody: issue.body})
+      const metadata = Metadata.get({issueBody})
       if (!metadata) {
         console.log('Issue had label but no metadata', issue)
         try {
@@ -98814,6 +98818,7 @@ module.exports = {
         }
         continue
       }
+
       console.log(`Found issue ${octokitParams.owner}/${octokitParams.repo}#${issue.number} with metadata`, metadata)
 
       const iffftsMet = Object.values(metadata).filter(iffft => {
@@ -98853,12 +98858,8 @@ module.exports = {
               break
           }
 
-          await Metadata.remove({octokit, octokitParams, issueBody: issue.body, iffft, label: LABEL})
+          issueBody = await Metadata.remove({octokit, octokitParams, issueBody, iffft, label: LABEL})
         }
-      }
-
-      if (iffftsMet.length) {
-        //console.log('jbjonesjr stub')
       }
     }
   }
