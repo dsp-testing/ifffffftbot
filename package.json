@@ -5,7 +5,7 @@
   "license": "ISC",
   "repository": "github:dsp-testing/supply-chain-hack-probot",
   "scripts": {
-    "build action": "ncc build index.js -o dist",
+    "build-action": "ncc build index.js -o dist",
     "start": "probot run ./index.js",
     "test": "jest && standard",
     "test:debug": "node --inspect=9229 node_modules/.bin/jest --runInBand"
