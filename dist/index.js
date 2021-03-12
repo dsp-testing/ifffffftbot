@@ -98856,6 +98856,10 @@ module.exports = {
           await Metadata.remove({octokit, octokitParams, issueBody: issue.body, iffft, label: LABEL})
         }
       }
+
+      if (iffftsMet.length) {
+        //console.log('jbjonesjr stub')
+      }
     }
   }
 }
