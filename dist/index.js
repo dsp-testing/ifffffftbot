@@ -6926,6 +6926,9 @@ module.exports = {
       }, octokitParams))
     } catch (e) {
       console.log('catching failed Then addLabel', e)
+      octokit.issues.createComment(Object.assign({
+        body: `Hey @${iffft.user}, Iffftbot couldn't add the ${iffft.With} label to this issue even though If ${iffft.If} Where ${iffft.Where} happened. Does this need your attention?`
+      }, octokitParams))
     }
   },
   async assign({octokit, octokitParams, iffft}) {
@@ -6936,6 +6939,9 @@ module.exports = {
       }, octokitParams))
     } catch (e) {
       console.log('catching failed Then assign', e)
+      octokit.issues.createComment(Object.assign({
+        body: `Hey @${iffft.user}, Iffftbot couldn't assign @${iffft.With} to this issue even though If ${iffft.If} Where ${iffft.Where} happened. Does this need your attention?`
+      }, octokitParams))
     }
   },
   async close({octokit, octokitParams, iffft}) {
@@ -6946,6 +6952,22 @@ module.exports = {
       }, octokitParams))
     } catch (e) {
       console.log('catching failed Then close', e)
+      octokit.issues.createComment(Object.assign({
+        body: `Hey @${iffft.user}, Iffftbot couldn't close this issue even though If ${iffft.If} Where ${iffft.Where} happened. Does this need your attention?`
+      }, octokitParams))
+    }
+  },
+  async removeLabel({octokit, octokitParams, iffft}) {
+    try {
+      await octokit.issues.removeLabel(Object.assign({name: iffft.With}, octokitParams))
+      octokit.issues.createComment(Object.assign({
+        body: `Hey @${iffft.user}, Iffftbot removed the ${iffft.With} label from this issue because If ${iffft.If} Where ${iffft.Where} happened.`
+      }, octokitParams))
+    } catch (e) {
+      console.log('catching failed Then removeLabel', e)
+      octokit.issues.createComment(Object.assign({
+        body: `Hey @${iffft.user}, Iffftbot couldn't remove the ${iffft.With} label from this issue even though If ${iffft.If} Where ${iffft.Where} happened. Does this need your attention?`
+      }, octokitParams))
     }
   }
 }
@@ -98785,8 +98807,12 @@ module.exports = {
       const metadata = Metadata.get({issueBody: issue.body})
       if (!metadata) {
         console.log('Issue had label but no metadata', issue)
-        octokit.issues.removeLabel(Object.assign({ name: LABEL }, octokitParams))
-        break
+        try {
+          await octokit.issues.removeLabel(Object.assign({ name: LABEL }, octokitParams))
+        } catch (e) {
+          console.log(`Couldn't remove label for missing metadata - ${e}`, issue)
+        }
+        continue
       }
       console.log(`Found issue ${octokitParams.owner}/${octokitParams.repo}#${issue.number} with metadata`, metadata)
 
@@ -98813,14 +98839,18 @@ module.exports = {
 
         for (const iffft of iffftsMet) {
           switch (iffft.Then) {
+            case 'addLabel':
+              await Thens.addLabel({octokit, octokitParams, iffft})
+              break
             case 'assign':
               await Thens.assign({octokit, octokitParams, iffft})
               break
             case 'close':
               await Thens.close({octokit, octokitParams, iffft})
               break
-            case 'label':
-              await Thens.addLabel({octokit, octokitParams, iffft})
+            case 'removeLabel':
+              await Thens.removeLabel({octokit, octokitParams, iffft})
+              break
           }
 
           await Metadata.remove({octokit, octokitParams, issueBody: issue.body, iffft, label: LABEL})
