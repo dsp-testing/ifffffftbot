@@ -1,0 +1,35 @@
+{
+  "name": "ifffftbot-placeholder",
+  "version": "0.0.1",
+  "description": "IFTTT all the GitHub Things",
+  "license": "ISC",
+  "repository": "github:dsp-testing/supply-chain-hack-probot",
+  "scripts": {
+    "start": "probot run ./index.js",
+    "test": "jest && standard",
+    "test:debug": "node --inspect=9229 node_modules/.bin/jest --runInBand"
+  },
+  "dependencies": {
+    "@octokit/action": "^3.5.0",
+    "@probot/adapter-github-actions": "^3.0.1",
+    "moment": "^2.29.1",
+    "chrono-node": "^2.2.3",
+    "probot": "^10.9.0",
+    "probot-metadata": "^2.0.0"
+  },
+  "devDependencies": {
+    "eslint-plugin-import": "^2.8.0",
+    "jest": "^23.6.0",
+    "nock": "^13.0.4",
+    "standard": "^11.0.1"
+  },
+  "engines": {
+    "node": "^8.3.0",
+    "npm": "^5.0.0"
+  },
+  "standard": {
+    "env": [
+      "jest"
+    ]
+  }
+}
