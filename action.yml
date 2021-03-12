@@ -2,4 +2,4 @@ name: 'IFTTT Bot - Triage Bot - Fix me bot'
 description: 'Let a robot manage your workload'
 runs:
   using: 'node12'
-  main: "index.js"
+  main: "dist/index.js"
