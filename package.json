@@ -13,7 +13,7 @@
   "dependencies": {
     "@octokit/action": "^3.5.0",
     "@probot/adapter-github-actions": "^3.0.1",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "chrono-node": "^2.2.3",
     "probot": "^10.9.0",
     "probot-metadata": "^2.0.0"
